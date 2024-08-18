@@ -45,8 +45,7 @@ def load_players():
     df = df.loc[~df.FPTS.isna(), ["Player", "Team", "FPTS", "position", "type"]]
     df = df.pivot(index = ["Player", "Team", "position"], columns = "type", values = "FPTS").reset_index()
     df["picked"] = 0
-    df.sort_values("projection", ascending = False, inplace = True)
-    df["differential"] = df.groupby("position").projection.apply(lambda x: x.shift(-5).rolling(window = 5).mean())
+    df.sort_values("projection", ascending = True, inplace = True)
     return df[["Player", "Team", "position", "low", "projection", "high", "picked"]]
 
 def create_newpage(position):

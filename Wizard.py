@@ -8,19 +8,21 @@ if "data" not in st.session_state:
 
 def begin_draft():
     positions = st.session_state.roster.keys()
-    st.session_state.data = st.session_state.data[st.session_state.data.position.isin(positions)].copy()
-    st.session_state["draft"] = Draft(st.session_state.player_num, st.session_state.data, st.session_state.roster)
+    df = st.session_state.data.copy()
+    df = df[df.position.isin(positions)].copy()
+    st.session_state["draft"] = Draft(st.session_state.player_num, df, st.session_state.roster)
     for position in positions:
         if position == "FLEX":
-            data = st.session_state.data[st.session_state.data.position.isin(["WR", "RB", "TE"])].copy()
+            data = df[df.position.isin(["WR", "RB", "TE"])].copy()
         else:
-            data = st.session_state.data[st.session_state.data.position == position].copy()
+            data = df[df.position == position].copy()
         data.sort_values("projection", inplace = True, ascending = False)
         data.insert(0, 'Rank', range(1, len(data) + 1))
         st.session_state[position] = data.copy()        
         create_newpage(position)   
     num_players = st.session_state.player_num
     half_players = num_players / 2
+    df["avg"] = df.groupby("position", group_keys = False).projection.apply(lambda x: x.rolling(window = 5).mean())    
     st.session_state.data["differential"] = st.session_state.data.groupby("position").projection.apply(lambda x: x.shift(-half_players).rolling(window=half_players).mean()
     st.session_state["draft_order"] = [i for i in range(1, num_players+1)] + [i for i in range(num_players, 0, -1)] 
     st.session_state.draft_begun = True
