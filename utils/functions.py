@@ -7,23 +7,6 @@ import pandas as pd
 import numpy as np
 
 repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-class Draft():
-    def __init__(self, num_players, data, positions):
-        self.players = num_players
-        self.data = data
-        self.positions = positions
-
-class Team():
-    def __init__(self, order):
-        self.order = order
-        self.roster = []
-
-    def pick(self, player, df):
-        self.roster.append(player)
-        self.data = df[df.Player.isin(self.roster)].copy()
-
-
 def load_players():
     df = pd.DataFrame()
     for position in ["QB", "RB", "WR", "TE", "K", "DST"]:
@@ -45,15 +28,5 @@ def load_players():
     df = df.loc[~df.FPTS.isna(), ["Player", "Team", "FPTS", "position", "type"]]
     df = df.pivot(index = ["Player", "Team", "position"], columns = "type", values = "FPTS").reset_index()
     df["picked"] = 0
-    df.sort_values("projection", ascending = True, inplace = True)
+    df.sort_values("projection", ascending = False, inplace = True)
     return df[["Player", "Team", "position", "low", "projection", "high", "picked"]]
-
-def create_newpage(position):
-    code = f"""
-import streamlit as st
-from utils.functions import *
-st.dataframe(st.session_state.position)
-"""
-    with open(repo_dir + f"/pages/{position}.py", 'w') as file:
-        file.write(code)
-
