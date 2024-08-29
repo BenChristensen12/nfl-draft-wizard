@@ -29,4 +29,5 @@ def load_players():
     df = df.pivot(index = ["Player", "Team", "position"], columns = "type", values = "FPTS").reset_index()
     df["picked"] = 0
     df.sort_values("projection", ascending = False, inplace = True)
-    return df[["Player", "Team", "position", "low", "projection", "high", "picked"]]
+    df["likely_pick"] = 0
+    return df[["Player", "Team", "position", "low", "projection", "high", "picked", "likely_pick"]]
