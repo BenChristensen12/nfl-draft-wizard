@@ -27,6 +27,9 @@ def load_players():
         df = pd.concat([df, position_df])
     df = df.loc[~df.FPTS.isna(), ["Player", "Team", "FPTS", "position", "type"]]
     df = df.pivot(index = ["Player", "Team", "position"], columns = "type", values = "FPTS").reset_index()
+    flex = df[df.position.isin(["RB", "WR", "TE"])].copy()
+    flex["position"] = "FLEX"
+    df = pd.concat([df, flex])
     df["picked"] = 0
     df.sort_values("projection", ascending = False, inplace = True)
     df["likely_pick"] = 0
