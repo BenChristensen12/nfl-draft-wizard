@@ -17,7 +17,7 @@ def calculate_lead(pick_num, score = "projection"):
     df = pd.DataFrame()
     for position in roster.keys():
         denominator = st.session_state.denominators[position]
-        window = round(st.session_state.picks_between[pick_num]/denominator)
+        window = max(round(st.session_state.picks_between[pick_num]/denominator), 1)
         position_df = data[(data.position == position) & (data.picked == 0)].copy()
         position_df["lead"] = position_df[score] - position_df[score].shift(-window)
         df = pd.concat([df, position_df])
