@@ -8,22 +8,18 @@ if "data" not in st.session_state:
     st.session_state["rounds"] = 16
     st.session_state["all_picks"] = []
     st.session_state["pick_number"] = 0
+    st.session_state["denominators"] = {"QB": 4, "RB": 2, "WR": 2, "TE": 4, "FLEX": 1.5, "K": 8, "DST": 8}
 
 def calculate_lead(pick_num, score = "projection"):
     data = st.session_state.data.sort_values([score], ascending = False)   
     team = st.session_state.draft_order[pick_num]
-    window = round(st.session_state.picks_between[pick_num]/2)
     roster = st.session_state[f"team_{team}_likely_roster"]
-    avail_positions = []
-    # for position in roster.keys():
-    #     if len(roster[position]) < st.session_state.roster[position]:
-    #         avail_positions.append(position)
-    if len(avail_positions) == 0:
-        avail_positions = list(roster.keys())
     df = pd.DataFrame()
-    for position in avail_positions:
+    for position in roster.keys():
+        denominator = st.session_state.denominators[position]
+        window = round(st.session_state.picks_between[pick_num]/denominator)
         position_df = data[(data.position == position) & (data.picked == 0)].copy()
-        position_df["lead"] = position_df[score] - position_df[score].shift(-1).rolling(window=window).mean().shift(1-window)
+        position_df["lead"] = position_df[score] - position_df[score].shift(-window)
         df = pd.concat([df, position_df])
     return df
 
