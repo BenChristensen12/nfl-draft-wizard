@@ -63,7 +63,7 @@ else:
     if st.session_state.pick_number+1 == st.session_state.your_num:
         st.header("Your pick!")
     else:
-        st.header(f"Team {st.session_state[f'team_{team}_name']} is up")
+        st.header(f"{st.session_state[f'team_{team}_name']} is up")
     score = st.selectbox("Select Score to Optimize", options = ["low", "projection", "high"], index = 1)
     tabs = st.tabs(["Recommendation", "QB", "RB", 'WR', 'TE', 'FLEX', 'K', 'D/ST'])
     with tabs[0]:
