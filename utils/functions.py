@@ -1,7 +1,3 @@
-
-import requests
-from bs4 import BeautifulSoup
-import csv
 import os
 import pandas as pd
 import numpy as np
@@ -27,10 +23,6 @@ def load_players():
         df = pd.concat([df, position_df])
     df = df.loc[~df.FPTS.isna(), ["Player", "Team", "FPTS", "position", "type"]]
     df = df.pivot(index = ["Player", "Team", "position"], columns = "type", values = "FPTS").reset_index()
-    flex = df[df.position.isin(["RB", "WR", "TE"])].copy()
-    flex["position"] = "FLEX"
-    df = pd.concat([df, flex])
-    df["picked"] = 0
+    df.insert(0, "Pick", False)
     df.sort_values("projection", ascending = False, inplace = True)
-    df["likely_pick"] = 0
-    return df[["Player", "Team", "position", "low", "projection", "high", "picked", "likely_pick"]]
+    return df[["Pick", "position", "Player", "Team", "low", "projection", "high"]]
