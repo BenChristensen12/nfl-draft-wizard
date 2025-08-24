@@ -11,7 +11,6 @@ def initialize_dashboard():
     st.session_state["position_counts"] = dict()
     st.session_state["positions"] = ["QB", "RB", "WR", "TE", "Flex", "K", "DST"]
     st.session_state["draft_begun"] = False
-    st.session_state["rounds"] = 16
     st.session_state["all_picks"] = []
     st.session_state["pick_number"] = 0
     st.session_state["denominators"] = {"QB": 4, "RB": 2, "WR": 2, "TE": 4, "K": 8, "DST": 8}
@@ -33,12 +32,14 @@ def prompt_draft_details():
 
 def begin_draft():
     roster = pd.DataFrame(columns = ["Position", "Player", "Projection", "Average Draft Position", "Your Draft Position", "Season Outlook"])
+    st.session_state.data = st.session_state.data[st.session_state.data.position.isin(list(set(st.session_state.chosen_positions) | set(["TE"])))]
     for position in st.session_state.chosen_positions:
         for i in range(st.session_state.position_counts[position]):
             roster.loc[len(roster)] = [position, None, None, None, None, None]
     for i in range(st.session_state.bench_count):
         roster.loc[len(roster)] = ["Bench", None, None, None, None, None]
     st.session_state["roster"] = roster.copy()
+    st.session_state["rounds"] = len(roster)
     y, n = st.session_state.your_num, st.session_state.num_players
     repeats = int(st.session_state.rounds / 2)
     st.session_state["draft_order"] = repeats * ([i for i in range(1, n+1)] + [i for i in range(n, 0, -1)])
@@ -80,7 +81,7 @@ def fetch_all_players():
             "Accept": "application/json",
             "X-Fantasy-Filter": json.dumps(xff),
         }
-        r = requests.get(url, headers=headers, verify=False)
+        r = requests.get(url, headers=headers)#, verify=False)
         r.raise_for_status()
         page = r.json().get("players", [])
         if not page:
