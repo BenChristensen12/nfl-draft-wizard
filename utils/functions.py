@@ -31,13 +31,22 @@ def prompt_draft_details():
     st.button("Enter Draft!", on_click = begin_draft)    
 
 def begin_draft():
-    roster = pd.DataFrame(columns = ["Position", "Player", "Projection", "Average Draft Position", "Your Draft Position", "Season Outlook"])
     st.session_state.data = st.session_state.data[st.session_state.data.position.isin(list(set(st.session_state.chosen_positions) | set(["TE"])))]
+    roster_positions = []
+
     for position in st.session_state.chosen_positions:
-        for i in range(st.session_state.position_counts[position]):
-            roster.loc[len(roster)] = [position, None, None, None, None, None]
-    for i in range(st.session_state.bench_count):
-        roster.loc[len(roster)] = ["Bench", None, None, None, None, None]
+        roster_positions += [position] * st.session_state.position_counts[position]
+
+    roster_positions += ["Bench"] * st.session_state.bench_count
+
+    roster = pd.DataFrame({
+        "Position": roster_positions,
+        "Player": [None] * len(roster_positions),
+        "Projection": [np.nan] * len(roster_positions),
+        "Average Draft Position": [np.nan] * len(roster_positions),
+        "Your Draft Position": [pd.NA] * len(roster_positions),
+        "Season Outlook": [None] * len(roster_positions)
+    })
     st.session_state["roster"] = roster.copy()
     st.session_state["rounds"] = len(roster)
     y, n = st.session_state.your_num, st.session_state.num_players
@@ -49,6 +58,7 @@ def begin_draft():
     st.session_state["draft_begun"] = True
 
 def update_roster_with_roster_df(row, pick_number):
+    st.write(st.session_state.roster.dtypes)
     position = row["position"]
     roster_position_df = st.session_state.roster[st.session_state.roster.Player.isna() & (st.session_state.roster.Position == position)].copy()
     if len(roster_position_df) > 0:
@@ -65,7 +75,7 @@ def update_roster_with_roster_df(row, pick_number):
         st.session_state.roster.loc[roster_position_df.index[0]] = ["Bench", row["Player"], row["projection"], row["draft_position"], pick_number+1, row["outlook"]]
 
 def fetch_all_players():
-    url = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2025/segments/0/leaguedefaults/3?view=kona_player_info"
+    url = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info"
     all_players = []
     offset = 0
     page_size = 200  # safe chunk; bump if you like
@@ -88,7 +98,7 @@ def fetch_all_players():
             break
         all_players.extend(page)
         offset += len(page)
-        return all_players
+    return all_players
 
 def retrieve_espn_api():
     repo_dir = os.path.dirname(os.path.abspath(__file__))
@@ -98,17 +108,26 @@ def retrieve_espn_api():
     for player_dict in players:
         names.append(player_dict['player']['fullName'])
         positions.append(config["defaultPositionId"][str(player_dict['player']['defaultPositionId'])])
-        draft_positions.append(player_dict['player']['ownership']['averageDraftPosition'])
+        if 'ownership' in player_dict['player'].keys():
+            draft_positions.append(player_dict['player']['ownership']['averageDraftPosition'])
+        else:
+            draft_positions.append(1000)
         if 'seasonOutlook' in player_dict['player'].keys():
             outlook = player_dict['player']['seasonOutlook']
         else: 
             outlook = None
         outlooks.append(outlook)
-        for stat_dict in player_dict['player']['stats']:
-            if stat_dict['externalId'] == '2025':
-                projections.append(stat_dict["appliedTotal"])
-                break
-
+        if 'stats' in player_dict['player']:
+            for stat_dict in player_dict['player']['stats']:
+                if stat_dict['externalId'] == '2026':
+                    if "appliedTotal" in stat_dict:
+                        projections.append(stat_dict["appliedTotal"])
+                    else:
+                        projections.append(0)
+                    break
+        else:
+            projections.append(0)
+    projections = np.concat([projections, np.zeros(len(names) - len(projections))])
     espn_data = pd.DataFrame({"Player": names,
                               "position": positions,
                               "draft_position": draft_positions,

@@ -17,15 +17,7 @@ else:
         st.header("Your Picks")
         st.dataframe(st.session_state.roster, hide_index = True)
     pick_number = st.session_state.data.Taken.sum()
-    if pick_number+1 in st.session_state.your_pick_order:
-        st.markdown(
-            "<h1 style='background-color:yellow; color:black; padding:10px; border-radius:10px;'>"
-            "⚡ Your Pick!"
-            "</h1>",
-            unsafe_allow_html=True
-        )
-    else:
-        st.title("NFL Draft Wizard")
+    st.title("NFL Draft Wizard")
 
     st.subheader("Recommended Pick")
     at_risk_rows = st.session_state.data[~st.session_state.data.Taken].head(st.session_state.picks_between[pick_number]).index
@@ -43,7 +35,15 @@ else:
     highest_lead = highest_lead[["position", "Player", "projection", "lead", "at_risk"]].round().copy()
     st.dataframe(highest_lead.round(), hide_index = True)    
     positions = st.session_state.chosen_positions  
-    st.subheader(f"Current Pick: {pick_number+1}")  
+    if pick_number+1 in st.session_state.your_pick_order:
+        st.markdown(
+            "<h1 style='background-color:yellow; color:black; padding:10px; border-radius:10px;'>"
+            "⚡ Your Pick!"
+            "</h1>",
+            unsafe_allow_html=True
+        )
+    else:
+        st.subheader(f"Current Pick: {pick_number+1}")  
     tabs = st.tabs(["All"] + positions)
     picked = set()
     for i, tab in enumerate(tabs):
